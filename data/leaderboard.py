@@ -336,7 +336,7 @@ if __name__ == '__main__':
         try:
             with open(DATA_DIR + 'knownerrors') as fin:
                 errs = fin.read().strip().split('\n')
-            if errs:
+            if errs and errs[0]:
                 print("I am aware of the following issues:")
                 for err in errs:
                     print("  -", err)
