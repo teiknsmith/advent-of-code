@@ -58,7 +58,7 @@
       [<a href="javascript:toggle_readme()" id="readme-clicker"></a>]
       [<a href="javascript:toggle_gradient()" id="gradient-clicker">toggle gradient</a>]
       <?php
-        exec("./data/leaderboard.py -d -y " . date("Y") . " -c " . $code . $sortby . " -r -w https://students.cs.byu.edu/~teikn/aoc-boards/?s=~~ 2>&1", $res);
+        exec("./data/leaderboard.py -y " . date("Y") . " -c " . $code . $sortby . " -r -w https://students.cs.byu.edu/~teikn/aoc-boards/?s=~~ 2>&1", $res);
         echo "\n";
         foreach($res as $line) {
           echo $line."\n";
