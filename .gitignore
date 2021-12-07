@@ -1,0 +1,5 @@
+.vscode/
+data/.lbcache/
+data/cookie
+data/leaderboards
+__pycache__/
