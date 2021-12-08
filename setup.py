@@ -78,10 +78,12 @@ grabber.feed(r.text)
 # display the final test for easy comparison in the next section
 print("the final test input looks kinda like this:")
 print(show_bits(challenge_input))
-
+print()
+print("now, select the tests to run")
 # and write each test into a file 'test0.in', 'test1.in', ...
 for i, test in enumerate(grabber.get_tests()):
     CUT_CHARS = 'yuiop[]\\hjkl;\'bnm,./67890-=^&*()_+YUIOP{}|HJKL:"BNM<>?'
+    print()
     print(show_bits(test))
     print()
     print(

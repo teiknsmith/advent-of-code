@@ -22,7 +22,7 @@ def show_bits(text,
 
 
 # grab the session cookie from the stored file
-with open('../../cookie', 'r') as cookie_in:
+with open('../../data/cookie', 'r') as cookie_in:
     session = cookie_in.read()
 jar = requests.cookies.RequestsCookieJar()
 jar.set('session', session)
