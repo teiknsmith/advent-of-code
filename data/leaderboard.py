@@ -132,13 +132,16 @@ class Leaderboard:
         base_str = player_starval_map[star]
         MIN_OPACITY, MAX_OPACITY = 0.15, 1.0
         mint, maxt = self.minmaxts[day][int(star)]
+
+        calc_opacity = ((lambda x: MAX_OPACITY - (MAX_OPACITY - MIN_OPACITY) *
+                         (x - mint) / (maxt - mint)) if
+                        (maxt - mint) else lambda x: MAX_OPACITY)
         NO_TIME_OPACITY = 0.05
         if self.usehtml:
             opacity = NO_TIME_OPACITY
             if int(star) in player_starval_map:
                 t = player_starval_map[int(star)]
-                opacity = MAX_OPACITY - (MAX_OPACITY - MIN_OPACITY) * (
-                    t - mint) / (maxt - mint)
+                opacity = calc_opacity(t)
             return f'<span class="time" data-opacity="{opacity}" style="filter: opacity({opacity});">{base_str}</span>'
         else:
             return base_str
