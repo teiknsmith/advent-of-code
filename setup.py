@@ -9,7 +9,6 @@ from utils import show_bits, get_with_cookie
 
 # copy template solution file to local sol.py
 shutil.copy("../../template.py", "sol.py")
-subprocess.run(['code', '-r', 'sol.py'])
 
 
 class TestGrabber(HTMLParser):
@@ -98,3 +97,5 @@ for i, test in enumerate(grabber.get_tests()):
             testout.write(test)
         if s[0] in CUT_CHARS:
             break
+
+subprocess.run(['code', '-r', 'sol.py'])
