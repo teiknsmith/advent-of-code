@@ -28,6 +28,7 @@ class Leaderboard:
         self.sortlink = sortlink
 
         self.__process()
+        self.repeat_name_every_n_columns = 4
 
     def __process(self):
         data = self.__get_json()
@@ -81,6 +82,7 @@ class Leaderboard:
 
         self.index_width = len(str(len(self.players)))
         self.score_width = max(len(str(self.__score(p))) for p in self.players)
+        self.name_width = max(len(p['name']) for p in self.players)
 
         self.players.sort(key=self.sortby)
 
@@ -104,29 +106,31 @@ class Leaderboard:
             print(self.sortname)
 
     def __print_table_headers(self):
-        iwidth = self.index_width
-        scwidth = self.score_width
+        # idx) sc Longest Name --:--:-- ...
+        #    ^^  ^ # 3 extra spaces before first name field
+        init_width = self.index_width + self.score_width + 3
+        # --:--:-- --:--:-- --:--:--
+        #          11111111112222222
+        # 12345678901234567890123456
+        day_width = 26
         ndays = self.ndays
 
-        print(f"{1:>{iwidth+scwidth+17}}", end='')
-        for d in range(2, ndays + 1):
-            print(f"{d:>27}", end='')
-        print()
+        def print_row(day_str_generator):
+            print(" " * (init_width), end='')
+            for d in range(ndays):
+                if not (d % self.repeat_name_every_n_columns):
+                    print(" " * (self.name_width + 1), end='')
+                print(day_str_generator(d), end='')
+            print()
 
-        print(' ' * (iwidth + scwidth + 2), end='')
-        for _ in range(ndays):
-            print(f" {'='*26}", end='')
-        print()
-
-        print(' ' * (iwidth + scwidth - 1), end='')
-        for _ in range(ndays):
-            print(f"       S1       S2       Δt", end='')
-        print()
-
-        print(' ' * (iwidth + scwidth + 2), end='')
-        for _ in range(ndays):
-            print(f" {' '.join(['='*8]*3)}", end='')
-        print()
+        # Day number row
+        print_row(lambda d: f"{d+1:^{day_width}} ")
+        # Day underline row
+        print_row(lambda _: '=' * day_width + ' ')
+        # Parts labels row
+        print_row(lambda _: "   S1       S2       Δt    ")
+        # Parts underline row
+        print_row(lambda _: f"{' '.join(['='*8]*3)} ")
 
     def __printing_time_field(self, player_starval_map, day, star):
         base_str = player_starval_map[star]
@@ -147,19 +151,19 @@ class Leaderboard:
             return base_str
 
     def __print_table(self):
-        iwidth = self.index_width
-        scwidth = self.score_width
         ndays = self.ndays
         noattempt = {str(i): Leaderboard.NO_TIME for i in range(1, 4)}
         for i, player in enumerate(self.players):
-            print(f"{i+1:>{iwidth}}) {self.__score(player):>{scwidth}}",
-                  end='')
+            print(f"{i+1:>{self.index_width}}) ", end='')
+            print(f"{self.__score(player):>{self.score_width}} ", end='')
             for d in range(ndays):
+                if not (d % self.repeat_name_every_n_columns):
+                    print(f"{player['name']:{'^' if d else '>'}{self.name_width}} ", end='')
                 times = player['completion_day_level'].get(
                     str(d + 1), noattempt)
                 for k in "123":
-                    print('',
-                          self.__printing_time_field(times, d + 1, k),
+                    print(self.__printing_time_field(times, d + 1, k),
+                          '',
                           end='')
             print('', player['name'])
             print()
