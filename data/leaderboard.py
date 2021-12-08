@@ -192,7 +192,7 @@ class Leaderboard:
 
 def read_boards_from_config_file():
     boards = []
-    with open('leaderboards', 'r') as fin:
+    with open(DATA_DIR + 'leaderboards', 'r') as fin:
         for l in fin.readlines():
             boards.append(l.strip().split('=', 1))
     return boards
