@@ -12,7 +12,7 @@ DATA_DIR = "./data/"
 
 
 class Leaderboard:
-    NO_TIME = '--:--:--'
+    NO_TIME = '        '
     SORTBYS = {
         'local': lambda p: (-p['local_score'], p['last_star_ts']),
         'stars': lambda p: (-p['stars'], p['last_star_ts']),
