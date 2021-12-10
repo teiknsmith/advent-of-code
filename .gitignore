@@ -4,3 +4,4 @@ data/cookie
 data/leaderboards
 __pycache__/
 data/knownerrors
+*.in
