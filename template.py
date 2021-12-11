@@ -22,6 +22,10 @@ def lines():
     return stdin.read().strip().split('\n')
 
 
+def intgridin():
+    return [[int(c) for c in r] for r in lines()]
+
+
 def groups():
     return [g.split('\n') for g in stdin.read().strip().split('\n\n')]
 
