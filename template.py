@@ -1,6 +1,6 @@
 import numpy as np
 from sys import stdin
-from collections import deque as deq
+from collections import deque
 from copy import copy
 import functools as fntls
 import itertools as ittls
