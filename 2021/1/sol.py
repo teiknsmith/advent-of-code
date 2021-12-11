@@ -1,6 +1,6 @@
 import numpy as np
 from sys import stdin
-from collections import deque as deq
+from collections import deque
 from copy import copy
 import functools as fntls
 import itertools as ittls
@@ -15,6 +15,12 @@ INF = float('inf')
 
 
 def solve():
+    increase_count = 0
+    measurements = list(map(int, lines()))
+    for i in range(3, len(measurements)):
+        if measurements[i] > measurements[i-3]:
+            increase_count = increase_count + 1
+    print(increase_count)
     pass
 
 
@@ -22,18 +28,12 @@ def lines():
     return stdin.read().strip().split('\n')
 
 
+def intgridin():
+    return [[int(c) for c in r] for r in lines()]
+
+
 def groups():
     return [g.split('\n') for g in stdin.read().strip().split('\n\n')]
-
-
-def solvea(inp):
-    #
-    return None
-
-
-def solveb(inp):
-    #
-    return None
 
 
 def btwn(v, l, h):
