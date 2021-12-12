@@ -3,7 +3,10 @@ import glob
 import os
 import time
 from subprocess import run, PIPE, STDOUT, TimeoutExpired
-from utils import show_bits
+import sys
+import threading
+from collections import deque
+from utils import *
 
 WIDTH = 30
 def solve(test_input, timeout=30):
@@ -51,6 +54,35 @@ for filename in glob.glob('*.in'):
         else:
             tests.append(fin.read())
 
+WRONG_ANSWER_STR = "That's not the right answer"
+def submit_to_server(answer, part):
+    year, day = yearday()
+    url = f"https://adventofcode.com/{year}/day/{day}/answer"
+    form =f"level={part}&answer={answer}"
+    headers = {'Content-type': 'application/x-www-form-urlencoded'}
+    jar = get_cookie_jar()
+    r = requests.post(url, cookies=jar, data=form, headers=headers)
+    return WRONG_ANSWER_STR not in r.text
+
+active_part = 1
+def submit(answer):
+    global active_part
+    if submit_to_server(answer, active_part):
+        active_part += 1
+        return True
+    return False
+
+def add_input(myin):
+    while True:
+        myin.append(sys.stdin.read(1))
+
+
+altstdin = deque()
+input_thread = threading.Thread(target=add_input, args=(altstdin,))
+input_thread.daemon = True
+input_thread.start()
+inputline = []
+
 og_time = 0
 while True:
     mtime = os.path.getmtime('sol.py')
@@ -60,4 +92,18 @@ while True:
         os.system('clear')
         print(to_print)
         og_time = mtime
+    if altstdin:
+        inputline += list(altstdin)
+        altstdin.clear()
+        if inputline[-1] == '\n':
+            answer = ''.join(inputline)
+            inputline.clear()
+            if submit(answer):
+                if active_part > 2:
+                    print("Well done! You solved it!")
+                    break
+                else:
+                    print(f"Success! Now onto part {active_part}")
+            else:
+                print("Yikes, now we gotta wait. dang it")
     time.sleep(0.2)

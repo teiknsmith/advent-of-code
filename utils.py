@@ -1,5 +1,6 @@
 import requests
-
+import os
+import functools
 
 def show_bits(text,
               max_lines=20,
@@ -20,13 +21,24 @@ def show_bits(text,
         disp_lines.append(line)
     return '\n'.join(disp_lines)
 
-
-# grab the session cookie from the stored file
-with open('../../data/cookie', 'r') as cookie_in:
-    session = cookie_in.read()
-jar = requests.cookies.RequestsCookieJar()
-jar.set('session', session)
+@functools.lru_cache(1)
+def get_cookie_jar():
+    # grab the session cookie from the stored file
+    with open('../../data/cookie', 'r') as cookie_in:
+        session = cookie_in.read()
+    jar = requests.cookies.RequestsCookieJar()
+    jar.set('session', session)
+    return jar
 
 
 def get_with_cookie(url):
-    return requests.get(url, cookies=jar)
+    return requests.get(url, cookies=get_cookie_jar())
+
+def yearday():
+    """gather the day info from the working directory
+    assumes a folder for each year, and folders for each day in that year
+    """
+    cwd = os.getcwd()
+    root, day = os.path.split(cwd)
+    root, year = os.path.split(root)
+    return year, day

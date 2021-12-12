@@ -5,7 +5,7 @@ import subprocess
 
 from html.parser import HTMLParser
 
-from utils import show_bits, get_with_cookie
+from utils import show_bits, get_with_cookie, yearday
 
 # copy template solution file to local sol.py
 shutil.copy("../../template.py", "sol.py")
@@ -54,12 +54,7 @@ class TestGrabber(HTMLParser):
                 grabber.tests, key=lambda t: (t[0], len(t[1])), reverse=True)
         ]
 
-
-# gather the day info from the working directory
-# assumes a folder for each year, and folders for each day in that year
-cwd = os.getcwd()
-root, day = os.path.split(cwd)
-root, year = os.path.split(root)
+year, day = yearday()
 
 # get the input for the test
 r = get_with_cookie(f"https://adventofcode.com/{year}/day/{day}/input")
