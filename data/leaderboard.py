@@ -161,7 +161,9 @@ class Leaderboard:
             print(f"{self.__score(player):>{self.score_width}} ", end='')
             for d in range(ndays):
                 if not (d % self.repeat_name_every_n_columns):
-                    print(f"{player['name']:{'^' if d else '>'}{self.name_width}} ", end='')
+                    print(
+                        f"{player['name']:{'^' if d else '>'}{self.name_width}} ",
+                        end='')
                 times = player['completion_day_level'].get(
                     str(d + 1), noattempt)
                 for k in "123":
