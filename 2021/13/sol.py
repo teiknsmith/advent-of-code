@@ -1,9 +1,6 @@
 from sys import stdin
 import functools as fntls
 
-e = enumerate
-INF = float('inf')
-
 
 def one_d_fold(f):
     return lambda c: c if c < f else 2 * f - c
