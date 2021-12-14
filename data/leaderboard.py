@@ -42,7 +42,10 @@ class Leaderboard:
             for d in range(1, self.ndays + 1)
         }
         for player in self.players:
-            player['dt_sortkey'] = [0, 0, player['last_star_ts']]
+            last_star_ts = player['last_star_ts']
+            if last_star_ts == "0":
+                last_star_ts = float('inf')
+            player['dt_sortkey'] = [0, 0, last_star_ts]
             for day, stars in player['completion_day_level'].items():
                 release_time = datetime.datetime(
                     year=self.year,
