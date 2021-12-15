@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import glob
 import os
+import datetime
 import time
 from subprocess import run, PIPE, STDOUT, TimeoutExpired
 import sys
@@ -88,7 +89,7 @@ while True:
     mtime = os.path.getmtime('sol.py')
     if mtime > og_time:
         to_print = str_all(tests, challenge_input)
-        to_print = f"timestamp: {mtime}\n\n" + to_print
+        to_print = f"timestamp: {datetime.datetime.utcfromtimestamp(mtime).strftime('%Y-%m-%d %H:%M:%S')}\n\n" + to_print
         os.system('clear')
         print(to_print)
         og_time = mtime
