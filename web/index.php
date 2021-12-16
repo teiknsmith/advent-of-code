@@ -3,7 +3,7 @@
     <title>Advent of Code Leaderboards</title>
     <meta property="og:title" content="Advent of Code Leaderboards" />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://students.cs.byu.edu/~teikn/aoc-boards/data/og.png" />
+    <meta property="og:image" content="https://students.cs.byu.edu/~teikn/aoc-boards/og.png" />
     <meta property="og:url" content="https://students.cs.byu.edu/~teikn/aoc-boards" />
     <meta property="og:description" content="A ~~better~~ different view of a leaderboard for Advent of Code. WIP." />
     <style>
