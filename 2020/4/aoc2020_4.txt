@@ -7,6 +7,8 @@
 ; start at ins/ instead of 0
 0 * * * ins/
 
+; dummy rule to get 'x' involved for my program parser (it is in the input but not any other rules)
+dummy x x * *
 
 ; in states replace / with ~ and put $ between pps
 ins/ / ~ r in/
