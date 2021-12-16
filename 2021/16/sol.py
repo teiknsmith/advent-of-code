@@ -1,17 +1,33 @@
 import functools as fntls
 import operator as op
 
+
 def cmp_to_op(cmp):
     return lambda vs: int(cmp(*(vs[:2])))
 
+
 class Pkt:
+    VERSION_LEN = 3
+    TYPE_ID_LEN = 3
+    HEADER_LEN = VERSION_LEN + TYPE_ID_LEN
+    LITERAL_GROUP_SIZE = 4
+
+    LITERAL_DO_CONTINUE_FLAG = "1"
+
+    LITERAL_TYPE_ID = 4
+
+    SUBPKTSLEN_BITLEN_TYPE_ID = "0"
+    SUBPKTSLEN_NUMPKTS_TYPE_ID = "1"
+
+    SUBPKTSLEN_BITLEN_FIELD_WIDTH = 15
+    SUBPKTSLEN_NUMPKTS_FIELD_WIDTH = 11
 
     OPERATORS = [
         sum,
         fntls.partial(fntls.reduce, op.mul),
         min,
         max,
-        None,
+        "literal",
         cmp_to_op(op.gt),
         cmp_to_op(op.lt),
         cmp_to_op(op.eq),
@@ -20,7 +36,7 @@ class Pkt:
     def __init__(self, version, type_id, payload):
         self.version = version
         self.type_id = type_id
-        self.is_operator = type_id != 4
+        self.is_operator = type_id != self.LITERAL_TYPE_ID
         if self.is_operator:
             self.subpkts = payload
             value = self.__evaluate()
@@ -29,7 +45,7 @@ class Pkt:
         self.value = value
 
     def __evaluate(self):
-        return Pkt.OPERATORS[self.type_id]([p.value for p in self.subpkts])
+        return self.OPERATORS[self.type_id]([p.value for p in self.subpkts])
 
     @staticmethod
     def hex_to_bits(hex):
@@ -46,34 +62,39 @@ class Pkt:
 
     @classmethod
     def __from_bits(cls, bits, si):
-        version = int(bits[si:si + 3], base=2)
-        type_id = int(bits[si + 3:si + 6], base=2)
-        if type_id == 4:
-            lit_bits_sc = si + 6
+        version = int(bits[si:si + cls.VERSION_LEN], base=2)
+        type_id = int(bits[si + cls.VERSION_LEN:si + cls.HEADER_LEN], base=2)
+        if type_id == cls.LITERAL_TYPE_ID:
+            lit_bits_sc = si + cls.HEADER_LEN
             lit_bits = []
-            while bits[lit_bits_sc] == "1":
-                lit_bits += bits[lit_bits_sc + 1:lit_bits_sc + 5]
-                lit_bits_sc += 5
-            lit_bits += bits[lit_bits_sc + 1:lit_bits_sc + 5]
-            lit_bits_sc += 5
+            more_groups = True
+            while more_groups:
+                more_groups = bits[lit_bits_sc] == cls.LITERAL_DO_CONTINUE_FLAG
+                lit_bits_sc += 1
+                lit_bits += bits[lit_bits_sc:lit_bits_sc +
+                                 cls.LITERAL_GROUP_SIZE]
+                lit_bits_sc += cls.LITERAL_GROUP_SIZE
             value = int(''.join(lit_bits), base=2)
             return Pkt(version, type_id, value), lit_bits_sc
         else:
-            len_type = bits[si + 6]
-            if len_type == "0":
-                len_subs = int(bits[si + 7:si + 7 + 15], base=2)
+            data_idx = si + cls.HEADER_LEN
+            len_type = bits[data_idx]
+            data_idx += 1
+            if len_type == cls.SUBPKTSLEN_BITLEN_TYPE_ID:
+                start_sub_i = data_idx + cls.SUBPKTSLEN_BITLEN_FIELD_WIDTH
+                len_subs = int(bits[data_idx:start_sub_i], base=2)
+                end_sub_i = start_sub_i + len_subs
                 subs = []
-                start_sub_i = si + 7 + 15
-                while start_sub_i < si + 7 + 15 + len_subs:
-                    pkt, start_sub_i = Pkt.__from_bits(bits, start_sub_i)
+                while start_sub_i < end_sub_i:
+                    pkt, start_sub_i = cls.__from_bits(bits, start_sub_i)
                     subs.append(pkt)
                 return Pkt(version, type_id, subs), start_sub_i
             else:
-                num_subs = int(bits[si + 7:si + 7 + 11], base=2)
+                start_sub_i = data_idx + cls.SUBPKTSLEN_NUMPKTS_FIELD_WIDTH
+                num_subs = int(bits[data_idx:start_sub_i], base=2)
                 subs = []
-                start_sub_i = si + 7 + 11
                 for _ in range(num_subs):
-                    pkt, start_sub_i = Pkt.__from_bits(bits, start_sub_i)
+                    pkt, start_sub_i = cls.__from_bits(bits, start_sub_i)
                     subs.append(pkt)
                 return Pkt(version, type_id, subs), start_sub_i
 
