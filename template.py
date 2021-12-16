@@ -1,6 +1,6 @@
 import numpy as np
 from sys import stdin
-from collections import deque
+from collections import deque, defaultdict
 from copy import copy
 import functools as fntls
 import itertools as ittls
@@ -10,7 +10,6 @@ import re
 import string
 import heapq as q
 
-e = enumerate
 INF = float('inf')
 
 
