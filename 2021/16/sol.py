@@ -61,42 +61,50 @@ class Pkt:
         return cls.from_bits(cls.hex_to_bits(hex))
 
     @classmethod
+    def __literal_from_bits(cls, bits, si):
+        lit_bits_sc = si
+        lit_bits = []
+        more_groups = True
+        while more_groups:
+            more_groups = bits[lit_bits_sc] == cls.LITERAL_DO_CONTINUE_FLAG
+            lit_bits_sc += 1
+            lit_bits += bits[lit_bits_sc:lit_bits_sc + cls.LITERAL_GROUP_SIZE]
+            lit_bits_sc += cls.LITERAL_GROUP_SIZE
+        value = int(''.join(lit_bits), base=2)
+        return value, lit_bits_sc
+
+    @classmethod
+    def __operator_from_bits(cls, bits, si):
+        data_idx = si
+        len_type = bits[data_idx]
+        data_idx += 1
+        if len_type == cls.SUBPKTSLEN_BITLEN_TYPE_ID:
+            start_sub_i = data_idx + cls.SUBPKTSLEN_BITLEN_FIELD_WIDTH
+            len_subs = int(bits[data_idx:start_sub_i], base=2)
+            end_sub_i = start_sub_i + len_subs
+            subs = []
+            while start_sub_i < end_sub_i:
+                pkt, start_sub_i = cls.__from_bits(bits, start_sub_i)
+                subs.append(pkt)
+            return subs, start_sub_i
+        else:
+            start_sub_i = data_idx + cls.SUBPKTSLEN_NUMPKTS_FIELD_WIDTH
+            num_subs = int(bits[data_idx:start_sub_i], base=2)
+            subs = []
+            for _ in range(num_subs):
+                pkt, start_sub_i = cls.__from_bits(bits, start_sub_i)
+                subs.append(pkt)
+            return subs, start_sub_i
+
+    @classmethod
     def __from_bits(cls, bits, si):
         version = int(bits[si:si + cls.VERSION_LEN], base=2)
         type_id = int(bits[si + cls.VERSION_LEN:si + cls.HEADER_LEN], base=2)
-        if type_id == cls.LITERAL_TYPE_ID:
-            lit_bits_sc = si + cls.HEADER_LEN
-            lit_bits = []
-            more_groups = True
-            while more_groups:
-                more_groups = bits[lit_bits_sc] == cls.LITERAL_DO_CONTINUE_FLAG
-                lit_bits_sc += 1
-                lit_bits += bits[lit_bits_sc:lit_bits_sc +
-                                 cls.LITERAL_GROUP_SIZE]
-                lit_bits_sc += cls.LITERAL_GROUP_SIZE
-            value = int(''.join(lit_bits), base=2)
-            return Pkt(version, type_id, value), lit_bits_sc
-        else:
-            data_idx = si + cls.HEADER_LEN
-            len_type = bits[data_idx]
-            data_idx += 1
-            if len_type == cls.SUBPKTSLEN_BITLEN_TYPE_ID:
-                start_sub_i = data_idx + cls.SUBPKTSLEN_BITLEN_FIELD_WIDTH
-                len_subs = int(bits[data_idx:start_sub_i], base=2)
-                end_sub_i = start_sub_i + len_subs
-                subs = []
-                while start_sub_i < end_sub_i:
-                    pkt, start_sub_i = cls.__from_bits(bits, start_sub_i)
-                    subs.append(pkt)
-                return Pkt(version, type_id, subs), start_sub_i
-            else:
-                start_sub_i = data_idx + cls.SUBPKTSLEN_NUMPKTS_FIELD_WIDTH
-                num_subs = int(bits[data_idx:start_sub_i], base=2)
-                subs = []
-                for _ in range(num_subs):
-                    pkt, start_sub_i = cls.__from_bits(bits, start_sub_i)
-                    subs.append(pkt)
-                return Pkt(version, type_id, subs), start_sub_i
+        internals_parser = {
+            cls.LITERAL_TYPE_ID: cls.__literal_from_bits,
+        }.get(type_id, cls.__operator_from_bits)
+        payload, end_idx = internals_parser(bits, si + cls.HEADER_LEN)
+        return Pkt(version, type_id, payload), end_idx
 
 
 def solve():
