@@ -10,7 +10,7 @@ from collections import deque
 from utils import *
 
 WIDTH = 30
-def solve(test_input, timeout=30):
+def solve(test_input, timeout=3):
     """Run sol.py on the input and return the output (or an appropriate message)"""
     try:
         res = run(['python3', 'sol.py'],
