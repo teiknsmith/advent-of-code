@@ -8,6 +8,7 @@ import sys
 import threading
 from collections import deque
 from utils import *
+import re
 
 WIDTH = 30
 def solve(test_input, timeout=3):
@@ -55,23 +56,43 @@ for filename in glob.glob('*.in'):
         else:
             tests.append(fin.read())
 
-WRONG_ANSWER_STR = "That's not the right answer"
+RIGHT_ANSWER_STR = "That's the right answer"
+TOO_SOON_PATT = re.compile(r"You have (.*) left to wait.")
+WRONG_ANSWER_PATT = re.compile(r"wait (.*) before trying again")
+WRONG_LEVEL_STR = "You don't seem to be solving the right level.  Did you already complete it?"
 def submit_to_server(answer, part):
+    global active_part
     year, day = yearday()
     url = f"https://adventofcode.com/{year}/day/{day}/answer"
     form =f"level={part}&answer={answer}"
     headers = {'Content-type': 'application/x-www-form-urlencoded'}
     jar = get_cookie_jar()
     r = requests.post(url, cookies=jar, data=form, headers=headers)
-    return WRONG_ANSWER_STR not in r.text
+    if RIGHT_ANSWER_STR in r.text:
+        if active_part == 1:
+            return True, f"Success! Now onto part 2"
+        else:
+            return True, "Well done! You solved it!"
+    elif WRONG_LEVEL_STR in r.text:
+        if active_part == 1:
+            active_part = 2
+            return submit_to_server(answer, active_part)
+        else:
+            return False, "wicky wacky. what did you do?!?!"
+    else:
+        rer = TOO_SOON_PATT.search(r.text)
+        if rer is None:
+            rer = WRONG_ANSWER_PATT.search(r.text)
+        return False, "Woah, you gotta wait " + rer.groups()[0] + " before trying again"
+
 
 active_part = 1
 def submit(answer):
     global active_part
-    if submit_to_server(answer, active_part):
+    success, msg = submit_to_server(answer, active_part)
+    if success:
         active_part += 1
-        return True
-    return False
+    return active_part >= 3, msg
 
 def add_input(myin):
     while True:
@@ -99,12 +120,8 @@ while True:
         if inputline[-1] == '\n':
             answer = ''.join(inputline)
             inputline.clear()
-            if submit(answer):
-                if active_part > 2:
-                    print("Well done! You solved it!")
-                    break
-                else:
-                    print(f"Success! Now onto part {active_part}")
-            else:
-                print("Yikes, now we gotta wait. dang it")
+            finished, msg = submit(answer)
+            print(msg)
+            if finished:
+                break
     time.sleep(0.2)
