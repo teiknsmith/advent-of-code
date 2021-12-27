@@ -1,5 +1,4 @@
 from collections import deque
-import numpy as np
 from sys import stdin
 import functools as fntls
 import itertools as ittls
@@ -7,14 +6,6 @@ import operator as op
 import subprocess
 
 INF = float('inf')
-
-OPS = {
-    "add": op.add,
-    "mul": op.mul,
-    "div": op.floordiv,
-    "mod": op.mod,
-    "eql": lambda a, b: int(a == b),
-}
 
 OPSTRS = {
     "add": '+',
@@ -35,17 +26,11 @@ COPSTRS = {
 def solve():
     prog = lines()
 
-    mem = runprog(prog, None)
+    mem = compprog(prog)
     finexpr = mem['z']
 
-    # finexpr.draw_graph()
-
-    # print()
-    # print()
     cfunc = finexpr.cfunc()
-    print(cfunc)
-    print()
-    # return
+
     cprog = f"""\
 #include "stdio.h"
 
@@ -96,46 +81,6 @@ int main() {{
 
     with open('monad.c', 'w') as monadout:
         monadout.write(cprog)
-
-    subprocess.run(['gcc', '-o', 'monad.out', 'monad.c'])
-    subprocess.run('./monad.out')
-
-    return
-
-    invars = list(reversed(Var.allvars))
-    vals = [9] * len(invars)
-
-    ii = 0
-    while True:
-        ii += 1
-
-        # could be list, yeah?vvvvv faster? do we know? do we care?
-        evaled = finexpr.eval(tuple(zip(invars, vals)))
-        if not evaled:
-            print('solution!', ''.join(map(str, reversed(vals))))
-        if not ii % 10000:
-            print(''.join(map(str, reversed(vals))), ' --> ', evaled)
-
-        for i, val in enumerate(vals):
-            vals[i] = val - 1
-            if vals[i] == 0:
-                vals[i] = 9
-            else:
-                break
-        else:
-            break
-
-    return
-
-    for model_num in range(9**14 - 1, -1, -1):
-        if not runprog(
-                prog,
-                iter(
-                    list(map(lambda c: int(c) + 1, np.base_repr(model_num,
-                                                                9)))))['z']:
-            print(''.join(
-                map(lambda c: str(int(c) + 1), np.base_repr(model_num, 9))))
-            break
 
 
 class Expr:
@@ -196,7 +141,14 @@ class Expr:
         rval = r.value()
 
         if isinstance(lval, int) and isinstance(rval, int):
-            return Literal(OPS[o](lval, rval))
+            v = {
+                "add": op.add,
+                "mul": op.mul,
+                "div": op.floordiv,
+                "mod": op.mod,
+                "eql": lambda a, b: int(a == b),
+            }[o](lval, rval)
+            return Literal(v)
 
         # for symmetric reductions
         for a, b, aval, bval in [(l, r, lval, rval), (r, l, rval, lval)]:
@@ -256,10 +208,6 @@ class Expr:
             if rmax < lmin or lmax < rmin:
                 return Literal(0)
 
-        # if isinstance(rval, int) and o == 'mod' and type(lval) is Expr:
-        #     if lval.o == 'add':
-        #         newl = cls.from_bits(lval)
-
         return cls(l, o, r)
 
     def value(self):
@@ -303,49 +251,6 @@ class Expr:
                 if v is not None)
             return min(vs), max(vs)
 
-    @fntls.lru_cache(maxsize=None)
-    def _truval(self, var_bindings):
-        lval = self.l.eval(var_bindings)
-        rval = self.r.eval(var_bindings)
-        return OPS[self.o](lval, rval)
-
-    def eval(self, var_bindings):
-        rel_vars = tuple(
-            (var, val) for var, val in var_bindings if var in self.used_vars)
-        return self._truval(rel_vars)
-
-    def draw_graph(self):
-        with open('monad.graph', 'w') as gout:
-            gout.write(self.graph_str())
-        subprocess.run(['graph-easy', 'monad.graph'])
-
-    def graph_str(self):
-        res = ['strict digraph expr {']
-        self.__accum_graph_str(res)
-        res.append('}')
-
-        seenls = set()
-        seenadd = seenls.add
-        res = [l for l in res if not (l in seenls or seenadd(l))]
-        return '\n'.join(res)
-
-    def _graph_label(self):
-        return OPSTRS[self.o]  #+ ' (' + str(self.valrange) + ')'
-
-    def __accum_graph_str(self, res):
-        res.append(f'  {id(self)} [label="{self._graph_label()}"];')
-        if type(self) is Expr:
-            res.append(f'  {id(self)} -> {id(self.l)};')
-            res.append(f'  {id(self)} -> {id(self.r)};')
-            self.l.__accum_graph_str(res)
-            self.r.__accum_graph_str(res)
-
-    def __str__(self) -> str:
-        return f'({self.l.value()} {OPSTRS[self.o]} {self.r.value()})'
-
-    def __repr__(self) -> str:
-        return str(self)
-
 
 class Var(Expr):
     nextvar = 0
@@ -358,23 +263,12 @@ class Var(Expr):
         self.used_vars = {self}
         self.incount = 0
 
-    def _truval(self, bindings):
-        assert len(bindings) == 1
-        print(f"checking with {self.var_id}, giving {bindings[0][1]}")
-        return bindings[0][1]
-
     def value(self):
         return self
 
     @fntls.cached_property
     def valrange(self):
         return 1, 9
-
-    def _graph_label(self):
-        return str(self)
-
-    def __str__(self) -> str:
-        return self.var_id
 
     def _accum_clines(self, _):
         return f'd[{self.var_id[1:]}]'
@@ -386,9 +280,6 @@ class Literal(Expr):
         self.used_vars = set()
         self.incount = 0
 
-    def eval(self, _):
-        return self.v
-
     def value(self):
         return self.v
 
@@ -396,17 +287,11 @@ class Literal(Expr):
     def valrange(self):
         return self.v, self.v
 
-    def _graph_label(self):
-        return str(self)
-
-    def __str__(self) -> str:
+    def _accum_clines(self, _):
         return str(self.v)
 
-    def _accum_clines(self, _):
-        return str(self)
 
-
-def runprog(prog, prog_inp):
+def compprog(prog):
     mem = {k: Literal(0) for k in "wxyz"}
 
     for l in prog:
