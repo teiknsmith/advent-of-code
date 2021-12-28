@@ -29,6 +29,11 @@ def groups():
     return [g.split('\n') for g in stdin.read().strip().split('\n\n')]
 
 
+def ints(l, _type=int):
+    # found this code by mserrano in mcpower's utils. thanks
+    return list(map(_type, re.findall(r"(?:(?<!\d)-)?\d+", l)))
+
+
 def btwn(v, l, h):
     return (v > l and v < h) or (v < l and v > h)
 
