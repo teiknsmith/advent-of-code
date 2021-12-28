@@ -1,0 +1,63 @@
+<html>
+
+<head>
+  <title>Advent of Code Leaderboards</title>
+  <meta property="og:title" content="Advent of Code Leaderboards" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://students.cs.byu.edu/~teikn/aoc-boards/og.png" />
+  <meta property="og:url" content="https://students.cs.byu.edu/~teikn/aoc-boards" />
+  <meta property="og:description" content="A ~~better~~ different view of a leaderboard for Advent of Code. WIP." />
+  <style>
+    body {
+      background-color: black;
+      color: white;
+    }
+
+    a {
+      background-color: black;
+      color: white;
+      text-decoration: underline;
+    }
+  </style>
+  <script>
+    function toggle_readme() {
+      var readme = document.getElementById('readme');
+      var clicker = document.getElementById('readme-clicker');
+      if (readme.style.display == "none") {
+        readme.style.display = "block";
+        clicker.innerHTML = "okay cool, you can hide that again";
+      } else {
+        readme.style.display = "none";
+        clicker.innerHTML = "what's going on?";
+      }
+    }
+    var times = document.getElementsByClassName("time");
+    var gradient = true;
+    function toggle_gradient() {
+      gradient = !gradient;
+      for (var i = 0; i < times.length; i++) {
+        if (gradient) {
+          opacity = times[i].getAttribute("data-opacity");
+          times[i].setAttribute("style", "filter: opacity(" + opacity + ");");
+        } else {
+          times[i].removeAttribute("style");
+        }
+      }
+    }
+    function toggle_day(d, headel) {
+      var dayels = document.getElementsByClassName("day" + d);
+      for (var i = 0; i < dayels.length; i++) {
+        dayels[i].hidden = !(dayels[i].hidden);
+      }
+      console.log(headel);
+      headel.removeAttribute("hidden");
+    }
+    window.onload = toggle_readme;
+  </script>
+</head>
+
+<body>
+  <p>
+  <pre>
+      [<a onclick="toggle_readme()" id="readme-clicker"></a>]
+      [<a onclick="toggle_gradient()" id="gradient-clicker">toggle gradient</a>]

@@ -1,0 +1,4 @@
+cp testhead test.html
+./data/leaderboard.py -d -y 2021 -c 944847 -r -w https://students.cs.byu.edu/~teikn/aoc-boards/?s=~~ 2>&1 >> test.html
+cat testend >> test.html
+

@@ -3,6 +3,7 @@ import argparse
 import datetime
 import json
 import os
+import re
 import requests
 import time
 
@@ -101,7 +102,7 @@ class Leaderboard:
                     print("<strong>", end='')
                 self.sortlink[1] = k
                 url = ''.join(self.sortlink)
-                print(f'<a href="{url}">[{k}]</a>', end='')
+                print(f'[<a href="{url}">{k}</a>]', end='')
                 if k == self.sortname:
                     print("</strong>", end='')
             print()
@@ -118,22 +119,44 @@ class Leaderboard:
         day_width = 26
         ndays = self.ndays
 
-        def print_row(day_str_generator):
+        def print_row(day_str_generator, ishead=False):
             print(" " * (init_width), end='')
             for d in range(ndays):
+                print(f'<span class="day{d+1}">', end='')
                 if not (d % self.repeat_name_every_n_columns):
                     print(" " * (self.name_width + 1), end='')
+                if ishead:
+                    print('</span>', end='')
                 print(day_str_generator(d), end='')
+                if ishead:
+                    print(f'<span class="day{d+1}">', end='')
+                print(' </span>' + ('' if ishead else ' '), end='')
             print()
 
         # Day number row
-        print_row(lambda d: f"{d+1:^{day_width}} ")
+        def dayheadgen(d):
+            plain = f"{'['+str(d+1)+']':^{day_width}}"
+            bits = re.split(r"\b", plain)
+            newbits = [
+                f'<span class="day{d+1}">',
+                bits[0], \
+                '</span>',
+                f'<a onclick="toggle_day({d+1}, this); return false;">', \
+                bits[1], \
+                "</a>", \
+                f'<span class="day{d+1}">',
+                bits[2], \
+                ' </span>',
+            ]
+            return ''.join(newbits)
+
+        print_row(dayheadgen, True)
         # Day underline row
-        print_row(lambda _: '=' * day_width + ' ')
+        print_row(lambda _: '=' * day_width)
         # Parts labels row
-        print_row(lambda _: "   S1       S2       Δt    ")
+        print_row(lambda _: "   S1       S2       Δt   ")
         # Parts underline row
-        print_row(lambda _: f"{' '.join(['='*8]*3)} ")
+        print_row(lambda _: f"{' '.join(['='*8]*3)}")
 
     def __printing_time_field(self, player_starval_map, day, star):
         base_str = player_starval_map[star]
@@ -160,6 +183,7 @@ class Leaderboard:
             print(f"{i+1:>{self.index_width}}) ", end='')
             print(f"{self.__score(player):>{self.score_width}} ", end='')
             for d in range(ndays):
+                print(f'<span class="day{d+1}">', end='')
                 if not (d % self.repeat_name_every_n_columns):
                     print(
                         f"{player['name']:{'^' if d else '>'}{self.name_width}} ",
@@ -170,6 +194,7 @@ class Leaderboard:
                     print(self.__printing_time_field(times, d + 1, k),
                           '',
                           end='')
+                print(f'</span> ', end='')
             print('', player['name'])
             print()
 
